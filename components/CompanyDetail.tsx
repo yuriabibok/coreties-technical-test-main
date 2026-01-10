@@ -1,31 +1,47 @@
-// TODO: Replace with real data from API (filtered by selected company)
-const FAKE_COMPANY_DETAIL = {
-  name: "Acme Electronics Ltd",
-  country: "United States",
-  website: "https://acme-electronics.example.com",
-  totalShipments: 127,
-  totalWeight: 45230,
-  topTradingPartners: [
-    { name: "Shanghai Electronics Co", country: "China", shipments: 34 },
-    { name: "Tokyo Components Ltd", country: "Japan", shipments: 28 },
-    { name: "Shenzhen Tech Inc", country: "China", shipments: 22 },
-  ],
-  topCommodities: [
-    { name: "Semiconductors", weight: 18500 },
-    { name: "Circuit Boards", weight: 12300 },
-    { name: "Display Panels", weight: 8400 },
-  ],
-};
+import useSWR from "swr";
+import { CompanyDetail as CompanyDetailType } from "@/types/company";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 interface CompanyDetailProps {
-  // TODO: pass parameters as suitable
+  companyName: string | null;
 }
 
-export default function CompanyDetail({ }: CompanyDetailProps) {
+export default function CompanyDetail({ companyName }: CompanyDetailProps) {
+  const { data: detail, error, isLoading } = useSWR<CompanyDetailType>(
+    companyName ? `/api/companies/${encodeURIComponent(companyName)}` : null,
+    fetcher
+  );
 
-  // TODO: Fetch real data based on companyName
-  const detail = FAKE_COMPANY_DETAIL;
+  if (!companyName) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Select a company from the list to view details
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Loading company details...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !detail) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-red-600 dark:text-red-400">
+          Error loading company details
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -38,6 +54,8 @@ export default function CompanyDetail({ }: CompanyDetailProps) {
       <a
         href={detail.website}
         className="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-6 block"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         {detail.website}
       </a>
@@ -105,12 +123,6 @@ export default function CompanyDetail({ }: CompanyDetailProps) {
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-        <p className="text-xs text-zinc-500 dark:text-zinc-500">
-          TODO: Fetch real data for selected company
-        </p>
       </div>
     </div>
   );
